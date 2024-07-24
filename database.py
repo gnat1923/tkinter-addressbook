@@ -52,6 +52,38 @@ def submit():
     state.delete(0, END)
     code.delete(0, END)
 
+# Update function (used in edit window)
+def update():
+    conn = sqlite3.connect("address_book.db")
+    c = conn.cursor()
+    record_id = delete_box.get()
+
+    c.execute("""UPDATE addresses SET
+              first_name = :first,
+              last_name = :last,
+              address = :address,
+              city = :city,
+              state = :state,
+              area_code = :code
+
+              WHERE oid = :oid""",
+              {'first': f_name_editor.get(),
+               'last': l_name_editor.get(),
+               'address': address_editor.get(),
+               'city': city_editor.get(),
+               'state': state_editor.get(),
+               'code': code_editor.get(),
+
+               'oid': record_id
+                  
+              }
+              )
+
+    conn.commit()
+    conn.close()
+
+    editor.destroy()
+
 def query():
     conn = sqlite3.connect("address_book.db")
     c = conn.cursor()
@@ -90,6 +122,7 @@ def edit():
     c = conn.cursor()
 
     # Create a new window
+    global editor
     editor = Tk()
     editor.title("Update record")
     editor.geometry("400x600")
@@ -100,6 +133,14 @@ def edit():
     records = c.fetchall() # or fetchone / fetchmany(x)
 
     # Add all fields from root window
+    # Make "editor" global variables so that they can be accessed in update function
+    global f_name_editor
+    global l_name_editor
+    global address_editor
+    global city_editor
+    global state_editor
+    global code_editor
+
     # Create text boxes
     f_name_editor = Entry(editor, width=30)
     f_name_editor.grid(row=0, column=1, padx=20, pady=(10, 0))
@@ -129,7 +170,7 @@ def edit():
     code_label_editor.grid(row=5, column=0)
 
     # Create submit button
-    submit_button_editor = Button(editor, text="Save record", command=submit)
+    submit_button_editor = Button(editor, text="Save record", command=update)
     submit_button_editor.grid(row=6, column=0, columnspan=2, pady=10, padx=10, ipadx=100)
 
     # Loop through results
